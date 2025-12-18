@@ -287,16 +287,6 @@ export class SubscriptionParserEnhanced {
             proxy['skip-cert-verify'] = proxy.skipCertVerify;
         }
 
-        // UDP 字段统一
-        if (proxy.UDP !== undefined && proxy.udp === undefined) {
-            proxy.udp = proxy.UDP;
-        }
-
-        // TFO 字段统一
-        if (proxy['tcp-fast-open'] !== undefined && proxy.tfo === undefined) {
-            proxy.tfo = proxy['tcp-fast-open'];
-        }
-
         // UUID 字段统一
         if (proxy.id && !proxy.uuid) {
             proxy.uuid = proxy.id;
@@ -367,23 +357,6 @@ export class SubscriptionParserEnhanced {
             }
 
             config.fp = proxy['client-fingerprint'] || proxy.fingerprint || '';
-
-            // 支持 skip-cert-verify
-            if (proxy['skip-cert-verify'] === true) {
-                config['skip-cert-verify'] = true;
-                config['verify_cert'] = false; // 兼容 Shadowrocket
-                config['insecure'] = true; // 兼容其他客户端
-            }
-        }
-
-        // UDP 支持
-        if (proxy.udp === true || proxy.udp === 'true') {
-            config.udp = true;
-        }
-
-        // TFO 支持
-        if (proxy.tfo === true || proxy.tfo === 'true' || proxy['tcp-fast-open'] === true) {
-            config.tfo = true;
         }
 
         // 传输协议配置
@@ -521,13 +494,8 @@ export class SubscriptionParserEnhanced {
 
             if (proxy['skip-cert-verify'] === true) {
                 params.set('allowInsecure', '1');
-                params.set('insecure', '1');
             }
         }
-
-        // UDP & TFO
-        if (proxy.udp === true || proxy.udp === 'true') params.set('udp', '1');
-        if (proxy.tfo === true || proxy.tfo === 'true' || proxy['tcp-fast-open'] === true) params.set('tfo', '1');
 
         // 传输层参数
         switch (network) {
@@ -609,14 +577,7 @@ export class SubscriptionParserEnhanced {
         const sni = proxy.sni || proxy.servername;
         if (sni) params.set('sni', sni);
 
-        if (proxy['skip-cert-verify'] === true) {
-            params.set('allowInsecure', '1');
-            params.set('insecure', '1');
-        }
-
-        // UDP & TFO
-        if (proxy.udp === true || proxy.udp === 'true') params.set('udp', '1');
-        if (proxy.tfo === true || proxy.tfo === 'true' || proxy['tcp-fast-open'] === true) params.set('tfo', '1');
+        if (proxy['skip-cert-verify'] === true) params.set('allowInsecure', '1');
 
         if (proxy.alpn) {
             const alpn = Array.isArray(proxy.alpn) ? proxy.alpn.join(',') : proxy.alpn;
@@ -760,12 +721,6 @@ export class SubscriptionParserEnhanced {
 
         if (proxy['skip-cert-verify'] === true || proxy.insecure === true) {
             params.set('insecure', '1');
-            params.set('allowInsecure', '1');
-        }
-
-        // TFO 支持
-        if (proxy.tfo === true || proxy.tfo === 'true' || proxy['tcp-fast-open'] === true) {
-            params.set('tfo', '1');
         }
 
         if (proxy.alpn) {
