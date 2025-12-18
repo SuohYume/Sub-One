@@ -51,6 +51,23 @@ export class SubscriptionParser {
     }
 
     /**
+     * 安全编码 Base64（UTF-8 支持）
+     */
+    encodeBase64(str: string): string {
+        try {
+            const bytes = new TextEncoder().encode(str);
+            const binaryString = Array.from(bytes, byte => String.fromCharCode(byte)).join('');
+            return btoa(binaryString);
+        } catch (e) {
+            console.warn('Base64 encoding failed, using fallback:', e);
+            return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
+                function toSolidBytes(match, p1) {
+                    return String.fromCharCode(parseInt(p1, 16));
+                }));
+        }
+    }
+
+    /**
      * 主解析方法
      */
     parse(content: string, subscriptionName = '', options: ProcessOptions = {}): Node[] {
@@ -406,7 +423,7 @@ export class SubscriptionParser {
         }
 
         const jsonStr = JSON.stringify(config);
-        const base64 = btoa(unescape(encodeURIComponent(jsonStr)));
+        const base64 = this.encodeBase64(jsonStr);
         return `vmess://${base64}`;
     }
 
@@ -465,7 +482,7 @@ export class SubscriptionParser {
             // spx - SpiderX (可选)
             const spx = opts['spider-x'] || opts.spiderX || opts.spx || '';
             if (spx) {
-                params.set('spx', encodeURIComponent(spx));
+                params.set('spx', spx);
             }
 
             // SNI (必需)
@@ -508,7 +525,7 @@ export class SubscriptionParser {
         switch (network) {
             case 'ws':
                 const wsOpts = proxy['ws-opts'] || {};
-                if (wsOpts.path) params.set('path', encodeURIComponent(wsOpts.path));
+                if (wsOpts.path) params.set('path', wsOpts.path);
                 if (wsOpts.headers?.Host) params.set('host', wsOpts.headers.Host);
 
                 // Early Data
@@ -525,7 +542,7 @@ export class SubscriptionParser {
             case 'h2':
             case 'http':
                 const h2Opts = proxy['h2-opts'] || {};
-                if (h2Opts.path) params.set('path', encodeURIComponent(h2Opts.path));
+                if (h2Opts.path) params.set('path', h2Opts.path);
                 if (h2Opts.host) {
                     const host = Array.isArray(h2Opts.host) ? h2Opts.host.join(',') : h2Opts.host;
                     params.set('host', host);
@@ -602,7 +619,7 @@ export class SubscriptionParser {
             switch (network) {
                 case 'ws':
                     const wsOpts = proxy['ws-opts'] || {};
-                    if (wsOpts.path) params.set('path', encodeURIComponent(wsOpts.path));
+                    if (wsOpts.path) params.set('path', wsOpts.path);
                     if (wsOpts.headers?.Host) params.set('host', wsOpts.headers.Host);
                     break;
 
@@ -633,7 +650,7 @@ export class SubscriptionParser {
         if (!server || !port || !method || !password) return '';
 
         const userInfo = `${method}:${password}`;
-        const base64UserInfo = btoa(userInfo);
+        const base64UserInfo = this.encodeBase64(userInfo);
         const serverPart = server.includes(':') && !server.startsWith('[') ? `[${server}]` : server;
         let url = `ss://${base64UserInfo}@${serverPart}:${port}`;
 
@@ -684,11 +701,11 @@ export class SubscriptionParser {
         ];
 
         const query = new URLSearchParams();
-        if (proxy['protocol-param']) query.set('protoparam', btoa(proxy['protocol-param']));
-        if (proxy['obfs-param']) query.set('obfsparam', btoa(proxy['obfs-param']));
-        if (proxy.name) query.set('remarks', btoa(proxy.name));
+        if (proxy['protocol-param']) query.set('protoparam', this.encodeBase64(proxy['protocol-param']));
+        if (proxy['obfs-param']) query.set('obfsparam', this.encodeBase64(proxy['obfs-param']));
+        if (proxy.name) query.set('remarks', this.encodeBase64(proxy.name));
 
-        const base64 = btoa(config.join(':'));
+        const base64 = this.encodeBase64(config.join(':'));
         let url = `ssr://${base64}`;
         if (query.toString()) url += `/?${query.toString()}`;
 
@@ -881,9 +898,13 @@ export class SubscriptionParser {
         if (!this._nodeRegex.test(line)) return null;
 
         let name = '';
-        const hashIndex = line.indexOf('#');
+        const hashIndex = line.lastIndexOf('#');
         if (hashIndex !== -1) {
-            name = decodeURIComponent(line.substring(hashIndex + 1) || '');
+            try {
+                name = decodeURIComponent(line.substring(hashIndex + 1));
+            } catch (e) {
+                name = line.substring(hashIndex + 1);
+            }
         }
 
         if (!name) {
@@ -919,8 +940,8 @@ export class SubscriptionParser {
                     }
                 }],
                 ['vless', () => {
-                    const vlessMatch = url.match(/vless:\/\/([^@]+)@([^:]+):(\d+)/);
-                    return vlessMatch ? vlessMatch[2] : 'VLESS节点';
+                    const match = url.match(/vless:\/\/.*@([^:]+):/);
+                    return match ? match[1] : 'VLESS节点';
                 }],
                 ['trojan', () => {
                     const trojanMatch = url.match(/trojan:\/\/([^@]+)@([^:]+):(\d+)/);
