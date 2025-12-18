@@ -95,13 +95,20 @@ const previewSubscription = ref<{ name: string; url: string } | null>(null);
 const openNodePreview = () => {
   if (!subLink.value) return;
 
-  // Force base64 for preview to ensure we get raw node list
-  const urlObj = new URL(subLink.value);
-  urlObj.searchParams.set('base64', '');
+  // 强制使用 base64 格式进行预览，确保获取原始节点列表
+  // 修复：使用 /sub?base64 格式（不带等号），符合 CF-Workers-SUB 规范
+  let previewUrl = subLink.value;
+
+  // 移除现有的格式参数
+  const urlObj = new URL(previewUrl);
+  urlObj.search = ''; // 清空所有查询参数
+
+  // 拼接正确的 base64 参数格式
+  previewUrl = `${urlObj.toString()}?base64`;
 
   previewSubscription.value = {
     name: '订阅预览',
-    url: urlObj.toString()
+    url: previewUrl
   };
   showNodeDetails.value = true;
 };

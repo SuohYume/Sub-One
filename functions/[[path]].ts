@@ -997,7 +997,7 @@ async function handleSubRequest(context: EventContext<Env, any, any>) {
         if (totalRemainingBytes > 0) {
             const formattedTraffic = formatBytes(totalRemainingBytes);
             const fakeNodeName = `流量剩余 ≫ ${formattedTraffic}`;
-            prependedContentForSubconverter = `trojan://00000000-0000-0000-0000-000000000000@127.0.0.1:443#${encodeURIComponent(fakeNodeName)}`;
+            // prependedContentForSubconverter = `trojan://00000000-0000-0000-0000-000000000000@127.0.0.1:443#${encodeURIComponent(fakeNodeName)}`;
         }
     }
 

@@ -13,7 +13,7 @@ import type { Node, ProcessOptions } from './types';
  * 5. 增强错误处理和日志记录
  * 6. 支持更多 Clash Meta 特性
  */
-export class SubscriptionParser {
+export class SubscriptionParserEnhanced {
     supportedProtocols: string[];
     _base64Regex: RegExp;
     _whitespaceRegex: RegExp;
@@ -312,7 +312,6 @@ export class SubscriptionParser {
             ['hysteria2', () => this.buildHysteriaUrlEnhanced(proxy)],
             ['hy2', () => this.buildHysteriaUrlEnhanced(proxy)],
             ['tuic', () => this.buildTUICUrl(proxy)],
-            ['anytls', () => this.buildAnyTlsUrl(proxy)],
             ['socks5', () => this.buildSocks5Url(proxy)],
             ['socks', () => this.buildSocks5Url(proxy)]
         ]);
@@ -327,7 +326,7 @@ export class SubscriptionParser {
     }
 
     /**
-     * 构建 VMess URL（完善版 - 增强参数保留）
+     * 构建 VMess URL（完善版）
      */
     buildVmessUrl(proxy: any): string {
         const config: any = {
@@ -348,22 +347,16 @@ export class SubscriptionParser {
             fp: ''
         };
 
-        // TLS 配置（增强版）
+        //TLS 配置
         if (proxy.tls === true || proxy.tls === 'true' || proxy.tls === 'tls') {
             config.tls = 'tls';
-            // 优先使用 servername，fallback 到 sni
-            config.sni = proxy.servername || proxy.sni || '';
+            config.sni = proxy.sni || proxy.servername || '';
 
             if (proxy.alpn) {
                 config.alpn = Array.isArray(proxy.alpn) ? proxy.alpn.join(',') : proxy.alpn;
             }
 
             config.fp = proxy['client-fingerprint'] || proxy.fingerprint || '';
-
-            // 支持 skip-cert-verify（虽然标准 VMess URL 不包含此字段，但某些客户端支持）
-            if (proxy['skip-cert-verify'] === true) {
-                config['skip-cert-verify'] = true;
-            }
         }
 
         // 传输协议配置
@@ -428,7 +421,7 @@ export class SubscriptionParser {
         params.set('encryption', 'none');
 
         // 传输协议
-        const network = proxy.network || 'tcp';
+        const network = proxy.network || proxy.type || 'tcp';
         params.set('type', network);
 
         // Flow（XTLS Vision）
@@ -811,47 +804,6 @@ export class SubscriptionParser {
         return url;
     }
 
-    /**
-     * 构建 AnyTLS URL
-     */
-    buildAnyTlsUrl(proxy: any): string {
-        const server = proxy.server;
-        const port = proxy.port;
-        // AnyTLS 通常使用 client-id 或 password
-        const credential = proxy['client-id'] || proxy.uuid || proxy.id || proxy.password;
-
-        if (!server || !port) return '';
-
-        const serverPart = server.includes(':') && !server.startsWith('[') ? `[${server}]` : server;
-        let url = credential
-            ? `anytls://${encodeURIComponent(credential)}@${serverPart}:${port}`
-            : `anytls://${serverPart}:${port}`;
-
-        const params = new URLSearchParams();
-
-        const sni = proxy.sni || proxy.servername;
-        if (sni) params.set('sni', sni);
-
-        if (proxy.alpn) {
-            const alpn = Array.isArray(proxy.alpn) ? proxy.alpn.join(',') : proxy.alpn;
-            params.set('alpn', alpn);
-        }
-
-        if (proxy['skip-cert-verify'] === true) params.set('allowInsecure', '1');
-
-        const fp = proxy['client-fingerprint'] || proxy.fingerprint;
-        if (fp) params.set('fp', fp);
-
-        // AnyTLS 特定参数
-        if (proxy.idle_timeout) params.set('idle_timeout', String(proxy.idle_timeout));
-
-        const queryString = params.toString();
-        if (queryString) url += `?${queryString}`;
-        if (proxy.name) url += `#${encodeURIComponent(proxy.name)}`;
-
-        return url;
-    }
-
     parseGenericNodes(nodes: any[], subscriptionName: string): Node[] {
         return nodes.map(node => ({
             id: crypto.randomUUID(),
@@ -1053,4 +1005,4 @@ export class SubscriptionParser {
 }
 
 // 导出单例
-export const subscriptionParser = new SubscriptionParser();
+export const subscriptionParserEnhanced = new SubscriptionParserEnhanced();
