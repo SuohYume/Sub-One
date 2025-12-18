@@ -4,6 +4,8 @@ import yaml from 'js-yaml';
 import { SubscriptionParser } from '../lib/shared/subscription-parser';
 import type { Node, ProcessOptions } from '../lib/shared/types';
 
+const subscriptionParser = new SubscriptionParser();
+
 const OLD_KV_KEY = 'sub_one_data_v1';
 const KV_KEY_SUBS = 'sub_one_subscriptions_v1';
 const KV_KEY_PROFILES = 'sub_one_profiles_v1';
@@ -748,7 +750,7 @@ async function handleApiRequest(request: Request, env: Env) {
 }
 
 
-const subscriptionParser = new SubscriptionParser();
+// 移除此行，已移动到顶部
 
 async function generateCombinedNodeList(context, config, userAgent, subs, prependedContent = '') {
     // 1. 处理手动节点
