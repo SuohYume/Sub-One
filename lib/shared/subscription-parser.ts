@@ -61,7 +61,7 @@ export class SubscriptionParser {
         } catch (e) {
             console.warn('Base64 encoding failed, using fallback:', e);
             return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
-                function toSolidBytes(match, p1) {
+                function toSolidBytes(_, p1) {
                     return String.fromCharCode(parseInt(p1, 16));
                 }));
         }
