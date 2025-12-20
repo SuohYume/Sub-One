@@ -24,8 +24,6 @@ export function useSubscriptions(initialSubsRef: Ref<Subscription[] | null>) {
       userInfo: sub.userInfo || null,
       exclude: sub.exclude || '', // 新增 exclude 属性
     }));
-    // [最終修正] 移除此處的自動更新迴圈，以防止本地開發伺服器因併發請求過多而崩潰。
-    // subscriptions.value.forEach(sub => handleUpdateNodeCount(sub.id, true)); 
   }
 
   const enabledSubscriptions = computed(() => subscriptions.value.filter(s => s.enabled));
@@ -98,7 +96,6 @@ export function useSubscriptions(initialSubsRef: Ref<Subscription[] | null>) {
     subsCurrentPage.value = 1;
   }
 
-  // {{ AURA-X: Modify - 使用批量更新API优化批量导入. Approval: 寸止(ID:1735459200). }}
   // [优化] 批量導入使用批量更新API，减少KV写入次数
   async function addSubscriptionsFromBulk(subs: any[]) {
     subscriptions.value.unshift(...subs);
@@ -119,7 +116,10 @@ export function useSubscriptions(initialSubsRef: Ref<Subscription[] | null>) {
           // 优化：使用Map提升查找性能
           const subsMap = new Map(subscriptions.value.map(s => [s.id, s]));
 
-          result.results.forEach((updateResult: any) => {
+          // 安全地获取结果数组，兼容不同的后端返回格式
+          const results = Array.isArray(result.data) ? result.data : (Array.isArray((result as any).results) ? (result as any).results : []);
+
+          results.forEach((updateResult: any) => {
             if (updateResult.success) {
               const sub = subsMap.get(updateResult.id);
               if (sub) {
@@ -133,7 +133,7 @@ export function useSubscriptions(initialSubsRef: Ref<Subscription[] | null>) {
             }
           });
 
-          const successCount = result.results.filter((r: any) => r.success).length;
+          const successCount = results.filter((r: any) => r.success).length;
           showToast(`批量更新完成！成功更新 ${successCount}/${subsToUpdate.length} 个订阅`, 'success');
         } else {
           showToast(`批量更新失败: ${result.message}`, 'error');
