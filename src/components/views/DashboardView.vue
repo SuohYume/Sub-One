@@ -276,9 +276,15 @@ const handleUpdateAllSubscriptions = async () => {
   isUpdatingAllSubs.value = true;
   try {
     const result = await batchUpdateNodes(enabledSubs.map(sub => sub.id));
-    if (result.success && result.data && Array.isArray(result.data)) {
+    
+    // 兼容 data 和 results 字段，处理后端可能返回的不同结构
+    const updateResults = Array.isArray(result.data) 
+      ? result.data 
+      : (Array.isArray((result as any).results) ? (result as any).results : null);
+
+    if (result.success && updateResults) {
        const subsMap = new Map(subscriptions.value.map(s => [s.id, s]));
-       result.data.forEach((r: any) => {
+       updateResults.forEach((r: any) => {
          if (r.success) {
            const sub = subsMap.get(r.id);
            if (sub) {
@@ -287,7 +293,7 @@ const handleUpdateAllSubscriptions = async () => {
            }
          }
        });
-       const successCount = result.data.filter((r: any) => r.success).length;
+       const successCount = updateResults.filter((r: any) => r.success).length;
        showToast(`成功更新了 ${successCount} 个订阅`, 'success');
        await handleDirectSave('订阅更新', false);
     } else {
