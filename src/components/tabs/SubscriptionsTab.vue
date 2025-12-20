@@ -99,7 +99,8 @@ const deleteSelected = () => {
 const selectedCount = computed(() => selectedSubIds.value.size);
 
 const handleClickOutside = (event: Event) => {
-  if (showSubsMoreMenu.value && subsMoreMenuRef.value && !subsMoreMenuRef.value.contains(event.target as Node)) {
+  // 使用 globalThis.Node 避免与自定义 Node 类型冲突，确保类型安全
+  if (showSubsMoreMenu.value && subsMoreMenuRef.value && !subsMoreMenuRef.value.contains(event.target as globalThis.Node)) {
     showSubsMoreMenu.value = false;
   }
 };
