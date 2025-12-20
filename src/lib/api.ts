@@ -1,11 +1,6 @@
-import type { Subscription, Profile, AppConfig } from '../types';
+import type { Subscription, Profile, AppConfig, ApiResponse } from '../types';
 
-export interface ApiResponse<T = any> {
-    success: boolean;
-    data?: T;
-    message?: string;
-    error?: string;
-}
+export { ApiResponse };
 
 export async function fetchInitialData(): Promise<{ subs: Subscription[]; profiles: Profile[]; config: AppConfig } | null> {
     try {

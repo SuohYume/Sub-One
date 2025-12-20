@@ -45,3 +45,11 @@ export interface InitialData {
     profiles?: Profile[];
     config?: AppConfig;
 }
+
+export interface ApiResponse<T = any> {
+    success: boolean;
+    data?: T;
+    message?: string;
+    error?: string;
+    results?: T; // 兼容某些API返回 results 字段
+}
