@@ -23,8 +23,8 @@ export function useAppPersistence(
     // Reset dirty flag when saveState becomes 'success'
     watch(saveState, (newState) => {
         if (newState === 'success') {
+            dirty.value = false; // Immediately reset dirty
             setTimeout(() => {
-                dirty.value = false;
                 saveState.value = 'idle';
             }, 1500);
         }
@@ -85,7 +85,7 @@ export function useAppPersistence(
             console.error('保存数据时发生错误:', error);
 
             const errorMessageMap = new Map([
-                ['网络', '网络连接异常，请检查网络后重试'],
+                ['网络', '网络连接异常，请检查网络连接'],
                 ['格式', '数据格式异常，请刷新页面后重试'],
                 ['存储', '存储服务暂时不可用，请稍后重试']
             ]);
