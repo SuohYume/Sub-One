@@ -122,10 +122,7 @@ onUnmounted(() => {
   <div class="sticky top-24">
     <div
       class="bg-white/60 dark:bg-gray-800/75 rounded-2xl border border-gray-300/50 dark:border-gray-700/30 p-6 relative overflow-hidden hover:shadow-xl transition-all duration-300">
-      <!-- 装饰性背景 -->
-      <div
-        class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-indigo-400/10 to-purple-400/10 rounded-full -translate-y-12 translate-x-12">
-      </div>
+
 
       <div class="relative z-10">
         <!-- 选择订阅内容 -->
