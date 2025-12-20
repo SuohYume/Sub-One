@@ -112,6 +112,9 @@ const handleToggleSortNodes = () => {
 const handleSaveSortChanges = async () => {
   if (await handleDirectSave('排序')) {
      hasUnsavedSortChanges.value = false;
+     // 保存后自动退出排序模式，提升用户体验
+     isSortingSubs.value = false;
+     isSortingNodes.value = false;
   }
 };
 
