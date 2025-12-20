@@ -1,4 +1,13 @@
-export async function fetchInitialData() {
+import type { Subscription, Profile, AppConfig } from '../types';
+
+export interface ApiResponse<T = any> {
+    success: boolean;
+    data?: T;
+    message?: string;
+    error?: string;
+}
+
+export async function fetchInitialData(): Promise<{ subs: Subscription[]; profiles: Profile[]; config: AppConfig } | null> {
     try {
         const response = await fetch('/api/data');
         if (!response.ok) {
@@ -13,7 +22,7 @@ export async function fetchInitialData() {
     }
 }
 
-export async function login(password: string) {
+export async function login(password: string): Promise<Response | { ok: boolean; error: string }> {
     try {
         const response = await fetch('/api/login', {
             method: 'POST',
@@ -28,7 +37,7 @@ export async function login(password: string) {
 }
 
 // [核心修改] saveSubs 现在接收并发送 profiles
-export async function saveSubs(subs: any[], profiles: any[]) {
+export async function saveSubs(subs: Subscription[], profiles: Profile[]): Promise<ApiResponse> {
     try {
         // 数据预验证
         if (!Array.isArray(subs) || !Array.isArray(profiles)) {
@@ -64,7 +73,7 @@ export async function saveSubs(subs: any[], profiles: any[]) {
     }
 }
 
-export async function fetchNodeCount(subUrl: string) {
+export async function fetchNodeCount(subUrl: string): Promise<{ count: number; userInfo: any }> {
     try {
         const res = await fetch('/api/node_count', {
             method: 'POST',
@@ -79,7 +88,7 @@ export async function fetchNodeCount(subUrl: string) {
     }
 }
 
-export async function fetchSettings() {
+export async function fetchSettings(): Promise<Partial<AppConfig>> {
     try {
         const response = await fetch('/api/settings');
         if (!response.ok) return {};
@@ -90,7 +99,7 @@ export async function fetchSettings() {
     }
 }
 
-export async function saveSettings(settings: any) {
+export async function saveSettings(settings: AppConfig): Promise<ApiResponse> {
     try {
         const response = await fetch('/api/settings', {
             method: 'POST',
@@ -125,7 +134,7 @@ export async function saveSettings(settings: any) {
  * @param {string[]} subscriptionIds - 要更新的订阅ID数组
  * @returns {Promise<Object>} - 更新结果
  */
-export async function batchUpdateNodes(subscriptionIds: string[]) {
+export async function batchUpdateNodes(subscriptionIds: string[]): Promise<ApiResponse> {
     try {
         const response = await fetch('/api/batch_update_nodes', {
             method: 'POST',
@@ -153,7 +162,7 @@ export async function batchUpdateNodes(subscriptionIds: string[]) {
  * @param {string} url - 要测试的URL
  * @returns {Promise<Object>} - 测试结果 { success, latency, status, error }
  */
-export async function testLatency(url: string) {
+export async function testLatency(url: string): Promise<{ success: boolean; latency?: number; message?: string; status?: number }> {
     try {
         const response = await fetch('/api/latency_test', {
             method: 'POST',

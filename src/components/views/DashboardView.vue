@@ -8,11 +8,11 @@ import { useSubscriptions } from '../../composables/useSubscriptions';
 import { useManualNodes } from '../../composables/useManualNodes';
 import { useProfiles } from '../../composables/useProfiles';
 import { useAppPersistence } from '../../composables/useAppPersistence';
-import { HTTP_REGEX, parseImportText, createSubscription, createNode } from '../../lib/importer';
+import { HTTP_REGEX } from '../../lib/constants';
+import { parseImportText, createSubscription, createNode } from '../../lib/importer';
 
-import type { Subscription, Profile, Node, AppConfig, InitialData } from '../../types';
+import type { Subscription, Profile, Node as AppNode, AppConfig, InitialData } from '../../types';
 
-// --- 组件导入 ---
 import DashboardHome from '../tabs/DashboardHome.vue';
 import SubscriptionsTab from '../tabs/SubscriptionsTab.vue';
 import ProfilesTab from '../tabs/ProfilesTab.vue';
@@ -47,7 +47,7 @@ const isLoading = ref(true);
 
 // --- 初始化状态 ---
 const initialSubs = ref<Subscription[]>([]);
-const initialNodes = ref<Node[]>([]);
+const initialNodes = ref<AppNode[]>([]);
 const config = ref<AppConfig>({});
 
 // --- Composables ---
@@ -123,7 +123,7 @@ const editingSubscription = ref<Subscription | null>(null);
 const isNewSubscription = ref(false);
 const showSubModal = ref(false);
 
-const editingNode = ref<Node | null>(null);
+const editingNode = ref<AppNode | null>(null);
 const isNewNode = ref(false);
 const showNodeModal = ref(false);
 
@@ -159,7 +159,7 @@ const initializeState = () => {
     const subsData = props.data.subs || [];
     // 分离订阅和节点
     initialSubs.value = subsData.filter(item => item.url && HTTP_REGEX.test(item.url)) as Subscription[];
-    initialNodes.value = subsData.filter(item => !item.url || !HTTP_REGEX.test(item.url)) as Node[];
+    initialNodes.value = subsData.filter(item => !item.url || !HTTP_REGEX.test(item.url)) as AppNode[];
     
     // 初始化订阅组
     initializeProfiles(props.data.profiles || []);
@@ -276,9 +276,9 @@ const handleUpdateAllSubscriptions = async () => {
   isUpdatingAllSubs.value = true;
   try {
     const result = await batchUpdateNodes(enabledSubs.map(sub => sub.id));
-    if (result.success && result.results) {
+    if (result.success && result.data && Array.isArray(result.data)) {
        const subsMap = new Map(subscriptions.value.map(s => [s.id, s]));
-       result.results.forEach((r: any) => {
+       result.data.forEach((r: any) => {
          if (r.success) {
            const sub = subsMap.get(r.id);
            if (sub) {
@@ -287,11 +287,11 @@ const handleUpdateAllSubscriptions = async () => {
            }
          }
        });
-       const successCount = result.results.filter((r: any) => r.success).length;
+       const successCount = result.data.filter((r: any) => r.success).length;
        showToast(`成功更新了 ${successCount} 个订阅`, 'success');
        await handleDirectSave('订阅更新', false);
     } else {
-      showToast(`更新失败: ${result.message}`, 'error');
+      showToast(`更新失败: ${result.message || '未知错误'}`, 'error');
     }
   } catch (error) {
     showToast('批量更新失败', 'error');
@@ -674,7 +674,7 @@ const handleShowProfileNodeDetails = (profile: Profile) => {
 /* 移动端响应式优化 */
 @media (max-width: 1024px) {
 
-  /* 强制移动端汉堡菜单显示时，主界面不受影响 */
+
   .container-optimized {
     width: 100% !important;
   }

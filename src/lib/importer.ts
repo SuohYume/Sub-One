@@ -1,9 +1,6 @@
 import { extractNodeName } from './utils';
 import type { Subscription, Node } from '../types';
-
-// Constants
-export const HTTP_REGEX = /^https?:\/\//;
-export const NODE_PROTOCOL_REGEX = /^(ss|ssr|vmess|vless|trojan|hysteria2?|hy|hy2|tuic|anytls|socks5):\/\//;
+import { HTTP_REGEX, NODE_PROTOCOL_REGEX } from './constants';
 
 export interface ImportResult {
     subs: Subscription[];
