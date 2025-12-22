@@ -1,4 +1,5 @@
 import { ref, computed, watch, type Ref } from 'vue';
+import { debounce } from 'lodash-es';
 import { useToastStore } from '../stores/toast';
 import { COUNTRY_CODE_MAP, REGION_KEYWORDS, REGION_ORDER } from '../lib/constants';
 import type { Node } from '../types';
@@ -10,6 +11,17 @@ export function useManualNodes(initialNodesRef: Ref<Node[] | null>) {
   const manualNodesPerPage = 24;
 
   const searchTerm = ref('');
+  const debouncedSearchTerm = ref('');
+
+  // 设置防抖，延迟 300ms 更新搜索词
+  const updateSearchTerm = debounce((newVal: string) => {
+    debouncedSearchTerm.value = newVal;
+  }, 300);
+
+  // 监听输入并触发防抖更新
+  watch(searchTerm, (newVal) => {
+    updateSearchTerm(newVal);
+  });
 
   function initializeManualNodes(nodesData: any[]) {
     manualNodes.value = (nodesData || []).map(node => ({
@@ -19,12 +31,12 @@ export function useManualNodes(initialNodesRef: Ref<Node[] | null>) {
     }));
   }
 
-  // [新增] 根据搜索词过滤节点
+  // [修改] 根据防抖后的搜索词过滤节点
   const filteredManualNodes = computed(() => {
-    if (!searchTerm.value) {
+    if (!debouncedSearchTerm.value) {
       return manualNodes.value;
     }
-    const lowerCaseSearch = searchTerm.value.toLowerCase();
+    const lowerCaseSearch = debouncedSearchTerm.value.toLowerCase();
 
     // 获取可能的替代搜索词
     const alternativeTerms = COUNTRY_CODE_MAP[lowerCaseSearch] || [];
@@ -204,7 +216,7 @@ export function useManualNodes(initialNodesRef: Ref<Node[] | null>) {
   }
 
   // [新增] 监听搜索词变化，重置分页
-  watch(searchTerm, () => {
+  watch(debouncedSearchTerm, () => {
     manualNodesCurrentPage.value = 1;
   });
 
