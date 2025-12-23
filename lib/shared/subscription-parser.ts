@@ -347,6 +347,12 @@ export class SubscriptionParser {
      * 构建 VMess URL（完善版 - 增强参数保留）
      */
     buildVmessUrl(proxy: any): string {
+        // 必要字段校验，缺失则返回空字符串并记录警告
+        if (!proxy.server || !proxy.port || !(proxy.uuid || proxy.id)) {
+            console.warn('VMess 必要字段缺失', proxy);
+            return '';
+        }
+
         const config: any = {
             v: '2',
             ps: proxy.name || 'VMess节点',
@@ -365,8 +371,10 @@ export class SubscriptionParser {
             fp: ''
         };
 
-        // TLS 配置（增强版）
-        if (proxy.tls === true || proxy.tls === 'true' || proxy.tls === 'tls') {
+        // TLS 配置（增强版 - 兼容 proxy.security）
+        const isTls = proxy.tls === true || proxy.tls === 'true' || proxy.tls === 'tls' || proxy.security === 'tls';
+        const isReality = proxy.security === 'reality' || proxy.tls === 'reality' || proxy['reality-opts'];
+        if (isTls) {
             config.tls = 'tls';
             // 优先使用 servername，fallback 到 sni
             config.sni = proxy.servername || proxy.sni || '';
@@ -381,12 +389,21 @@ export class SubscriptionParser {
             if (proxy['skip-cert-verify'] === true) {
                 config['skip-cert-verify'] = true;
             }
+        } else if (isReality) {
+            // Reality 协议支持
+            config.tls = 'reality';
+            const opts = proxy['reality-opts'] || proxy;
+            config.sni = opts.sni || opts.servername || proxy.sni || '';
+            config.fp = opts['client-fingerprint'] || opts.fingerprint || '';
+            if (opts.pbk) config.pbk = opts.pbk;
+            if (opts.sid) config.sid = opts.sid;
+            if (opts.spx) config.spx = opts.spx;
         }
 
         // 传输协议配置
         switch (config.net) {
             case 'ws':
-                config.host = proxy['ws-opts']?.headers?.Host || proxy['ws-headers']?.Host || proxy.host || '';
+                config.host = proxy['ws-opts']?.headers?.Host || proxy['ws-headers']?.Host || proxy.host || proxy.server;
                 config.path = proxy['ws-opts']?.path || proxy['ws-path'] || proxy.path || '/';
                 break;
 
@@ -396,6 +413,8 @@ export class SubscriptionParser {
                     config.host = Array.isArray(proxy['h2-opts'].host)
                         ? proxy['h2-opts'].host.join(',')
                         : proxy['h2-opts'].host;
+                } else {
+                    config.host = proxy.host || proxy.server;
                 }
                 config.path = proxy['h2-opts']?.path || '/';
                 break;
