@@ -210,25 +210,6 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.slide-fade-enter-active,
-.slide-fade-leave-active {
-  transition: all 0.3s ease-out;
-}
-
-.slide-fade-enter-from,
-.slide-fade-leave-to {
-  transform: translateY(-20px);
-  opacity: 0;
-}
-
-.slide-fade-sm-enter-active,
-.slide-fade-sm-leave-active {
-  transition: all 0.2s ease-out;
-}
-
-.slide-fade-sm-enter-from,
-.slide-fade-sm-leave-to {
-  transform: translateY(-10px);
-  opacity: 0;
-}
+/* 过渡动画已移至 design-system.css 全局定义 */
 </style>
+
