@@ -1033,19 +1033,10 @@ async function handleSubRequest(context: EventContext<Env, any, any>) {
     // 为回调生成 Base64 (同样使用新方法)
     const base64Content = subscriptionParser.encodeBase64(combinedContent);
 
-    const callbackToken = await getCallbackToken(env);
-    const callbackPath = profileIdentifier ? `/${token}/${profileIdentifier}` : `/${token}`;
-    const callbackUrl = `${url.protocol}//${url.host}${callbackPath}?target=base64&callback_token=${callbackToken}`;
+    // --- [优化] 移除 Callback 逻辑，直接通过 POST 推送数据 ---
+    // 旧流程：生成 Token -> 构造 Callback URL -> Subconverter 回调拉取 (双重请求)
+    // 新流程：直接将 base64Content POST 给 Subconverter (单次请求)
 
-    // 保留 callback 逻辑
-    if (url.searchParams.get('callback_token') === callbackToken) {
-        const headers = {
-            "Content-Type": "text/plain; charset=utf-8",
-            'Cache-Control': 'no-store, no-cache',
-            "Content-Disposition": `inline; filename*=utf-8''${encodeURIComponent(subName)}`
-        };
-        return new Response(base64Content, { headers });
-    }
 
     // 智能处理：如果用户填入了 http:// 或 https:// 前缀，自动去除，防止 URL 拼接错误
     let cleanSubConverter = effectiveSubConverter.replace(/^https?:\/\//, '').replace(/\/$/, '');
@@ -1053,13 +1044,13 @@ async function handleSubRequest(context: EventContext<Env, any, any>) {
     subconverterUrl.searchParams.set('target', targetFormat);
 
     // 针对 Clash 格式，始终添加 ver=meta 参数
-    // Meta 内核支持更多协议（VLESS Reality、Hysteria2 等），是 Clash 的超集
-    // 即使客户端是旧版 Clash，使用 Meta 配置也能向下兼容
     if (targetFormat === 'clash') {
         subconverterUrl.searchParams.set('ver', 'meta');
     }
 
-    subconverterUrl.searchParams.set('url', callbackUrl);
+    // [优化] 移除 url 参数，改为 POST Body 传输
+    // subconverterUrl.searchParams.set('url', callbackUrl); 
+
     if ((targetFormat === 'clash' || targetFormat === 'loon' || targetFormat === 'surge') && effectiveSubConfig && effectiveSubConfig.trim() !== '') {
         subconverterUrl.searchParams.set('config', effectiveSubConfig);
     }
@@ -1067,8 +1058,12 @@ async function handleSubRequest(context: EventContext<Env, any, any>) {
 
     try {
         const subconverterResponse = await fetch(subconverterUrl.toString(), {
-            method: 'GET',
-            headers: { 'User-Agent': 'Mozilla/5.0' },
+            method: 'POST', // [优化] 改为 POST
+            headers: {
+                'User-Agent': 'Mozilla/5.0',
+                'Content-Type': 'text/plain; charset=utf-8'
+            },
+            body: base64Content // [优化] 直接发送数据
         });
 
         if (!subconverterResponse.ok) {
@@ -1096,14 +1091,7 @@ async function handleSubRequest(context: EventContext<Env, any, any>) {
     }
 }
 
-async function getCallbackToken(env) {
-    const secret = env.ADMIN_PASSWORD || 'default-callback-secret';
-    const encoder = new TextEncoder();
-    const keyData = encoder.encode(secret);
-    const cryptoKey = await crypto.subtle.importKey('raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-    const signature = await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode('callback-static-data'));
-    return Array.from(new Uint8Array(signature)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
-}
+
 
 
 // --- [核心修改] Cloudflare Pages Functions 主入口 ---
