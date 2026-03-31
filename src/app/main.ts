@@ -18,7 +18,7 @@ import { createPinia } from 'pinia';
 // 导入根组件
 import App from '@/app/App.vue';
 // 导入全局样式文件（包含 Tailwind CSS 和自定义样式）
-import '@/app/assets/styles/main.css';
+import '@/assets/styles/main.css';
 import router from '@/app/router';
 
 // 创建 Pinia 实例（全局状态管理）
