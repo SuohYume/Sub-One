@@ -5,7 +5,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 
 import Footer from '@/app/layouts/AppFooter.vue';
-import Sidebar from '@/common/layout/AppSidebar.vue';
+import Sidebar from '@/app/layouts/AppSidebar.vue';
 import { useDataCounts } from '@/common/hooks/useDataCounts';
 import { APP_TABS, type AppTab } from '@/common/utils/navigation';
 import { NodeDetailsModal } from '@/widgets/node';
