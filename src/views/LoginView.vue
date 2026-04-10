@@ -164,7 +164,7 @@ const handleSubmit = async () => {
                 <p
                     class="text-xs font-medium tracking-wide text-gray-600 sm:text-sm dark:text-gray-400"
                 >
-                    {{ isSetup ? '首次使用，请创建管理员账号' : '现代化订阅管理平台' }}
+                    {{ actualIsSetup ? '首次使用，请创建管理员账号' : '现代化订阅管理平台' }}
                 </p>
             </div>
 
@@ -347,7 +347,7 @@ const handleSubmit = async () => {
                 </div>
 
                 <!-- 确认密码输入（仅设置模式） -->
-                <div v-if="isSetup" class="mb-3 sm:mb-4">
+                <div v-if="actualIsSetup" class="mb-3 sm:mb-4">
                     <label
                         for="confirmPassword"
                         class="mb-1.5 flex items-center gap-2 text-sm font-semibold text-gray-800 sm:mb-2.5 sm:text-base dark:text-gray-100"
@@ -456,19 +456,19 @@ const handleSubmit = async () => {
                                 stroke-linejoin="round"
                                 stroke-width="2"
                                 :d="
-                                    isSetup
+                                    actualIsSetup
                                         ? 'M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z'
                                         : 'M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1'
                                 "
                             />
                         </svg>
-                        {{ isSetup ? '创建管理员账号' : '立即登录' }}
+                        {{ actualIsSetup ? '创建管理员账号' : '立即登录' }}
                     </span>
 
                     <!-- 加载状态 - 显示加载动画 -->
                     <span v-else class="flex items-center justify-center gap-2">
                         <div class="spinner h-4 w-4 border-2 sm:h-5 sm:w-5"></div>
-                        {{ isSetup ? '创建中...' : '登录中...' }}
+                        {{ actualIsSetup ? '创建中...' : '登录中...' }}
                     </span>
                 </button>
 
