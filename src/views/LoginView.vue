@@ -39,7 +39,11 @@ const sessionStore = useSessionStore();
 const router = useRouter();
 
 // 优先使用 Store 中的状态
-const actualIsSetup = computed(() => props.isSetup ?? sessionStore.sessionState === 'needsSetup');
+const actualIsSetup = computed(() => {
+    const result = props.isSetup ?? sessionStore.sessionState === 'needsSetup';
+    console.log('[LoginView] actualIsSetup:', result, 'sessionState:', sessionStore.sessionState, 'props.isSetup:', props.isSetup);
+    return result;
+});
 const actualLoginFunc = computed(() =>
     props.login ?? (actualIsSetup.value ? sessionStore.initializeSystem : sessionStore.login)
 );
